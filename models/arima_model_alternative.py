@@ -3,15 +3,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.seasonal import seasonal_decompose
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
-
 from utils.metrics import calculate_metrics
 from utils.preprocessing import infer_period
+from utils.visualization import setup_plot_style
 
-
-def check_stationarity(timeseries, max_lags=100):
+def check_stationarity(timeseries, title, max_lags=100):
     """Check if time series is stationary using Augmented Dickey-Fuller test"""
     # Reduce lags if series is too short
     n_samples = len(timeseries)
@@ -27,6 +28,26 @@ def check_stationarity(timeseries, max_lags=100):
     except:
         return False  # If test fails, assume non-stationary
 
+def make_stationary(timeseries):
+    """Make time series stationary through differencing"""
+    original_series = timeseries.copy()
+    
+    # Check if already stationary
+    if check_stationarity(timeseries, "Original"):
+        return timeseries, 0
+    
+    # First differencing
+    diff_1 = timeseries.diff().dropna()
+    if check_stationarity(diff_1, "First Difference"):
+        return diff_1, 1
+    
+    # Second differencing if needed
+    diff_2 = diff_1.diff().dropna()
+    if check_stationarity(diff_2, "Second Difference") and len(diff_2) > 10:
+        return diff_2, 2
+    
+    # If still not stationary, return first difference anyway
+    return diff_1, 1
 
 def auto_arima_forecast(series, title, test_size=24, save_plots=True, max_p=5, max_q=5, max_d=2):
     """ARIMA forecast using statsmodels with automatic order selection"""
@@ -49,14 +70,14 @@ def auto_arima_forecast(series, title, test_size=24, save_plots=True, max_p=5, m
         
         # Determine differencing order (d)
         d = 0
-        if not check_stationarity(train):
+        if not check_stationarity(train, "Original"):
             # Try differencing
             temp_diff_1 = train.diff().dropna()
-            if check_stationarity(temp_diff_1):
+            if check_stationarity(temp_diff_1, "First Diff"):
                 d = 1
             else:
                 temp_diff_2 = temp_diff_1.diff().dropna()
-                if check_stationarity(temp_diff_2) and len(temp_diff_2) > 10:
+                if check_stationarity(temp_diff_2, "Second Diff") and len(temp_diff_2) > 10:
                     d = 2
                 else:
                     d = 1  # Default to first differencing if still not stationary
@@ -196,3 +217,7 @@ def auto_arima_forecast(series, title, test_size=24, save_plots=True, max_p=5, m
             # Double fallback
             naive_forecast = np.full(test_size, np.mean(series.values[-10:]))
             return pd.Series(naive_forecast, index=pd.date_range(start=series.index[-1], periods=test_size+1, freq=pd.infer_freq(series.index))[1:]), None
+
+def evaluate_arima_model(y_true, y_pred, y_train):
+    """Evaluate ARIMA model performance"""
+    return calculate_metrics(y_true=y_true, y_pred=y_pred, y_train=y_train, m=infer_period(pd.Series(y_train)))
