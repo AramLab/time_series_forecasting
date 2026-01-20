@@ -9,51 +9,65 @@ from utils.preprocessing import infer_period
 def safe_import_ceemdan():
     """Безопасный импорт CEEMDAN с обработкой различных версий PyEMD"""
     try:
-        # Импортируем EMD как класс первым, чтобы избежать конфликта
-        from PyEMD.EMD import EMD
-        import PyEMD
-        # Заменяем EMD в PyEMD на класс, если он является модулем
-        if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
-            PyEMD.EMD = EMD
-        # Теперь можно безопасно импортировать CEEMDAN
+        # Принудительно импортируем EMD как класс до импорта CEEMDAN
+        # Это исправляет ошибку 'module' object is not callable
+        from PyEMD.EMD import EMD as EMD_Class
+        
+        # Загружаем CEEMDAN напрямую
         from PyEMD.CEEMDAN import CEEMDAN as CEEMDAN_Class
+        
+        # Убедимся, что EMD доступен как вызываемый класс в PyEMD
+        import PyEMD
+        if not callable(PyEMD.EMD):
+            PyEMD.EMD = EMD_Class
+            
         print("✅ CEEMDAN успешно импортирован из PyEMD.CEEMDAN")
         return CEEMDAN_Class
     except ImportError:
         try:
-            # Пытаемся импортировать EMD как класс отдельно
-            from PyEMD.EMD import EMD as EMD_Class
+            # Альтернативный путь импорта
             import PyEMD
-            # Убедиться, что EMD в PyEMD - это класс, а не модуль
-            import sys
-            if 'PyEMD.EMD' in sys.modules:
-                # Заменить модуль EMD на класс EMD
-                sys.modules['PyEMD.EMD'] = EMD_Class
-            if hasattr(PyEMD, 'EMD'):
-                if not callable(PyEMD.EMD):
+            # Сначала убедимся, что EMD правильно импортирован как класс
+            try:
+                from PyEMD.EMD import EMD as EMD_Class
+                # Заменяем EMD в PyEMD, если он является модулем
+                if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
                     PyEMD.EMD = EMD_Class
+            except ImportError:
+                pass  # EMD может быть уже доступен как класс
+            
+            # Пытаемся импортировать CEEMDAN напрямую
             from PyEMD import CEEMDAN as CEEMDAN_Class
             print("✅ CEEMDAN успешно импортирован из PyEMD")
             return CEEMDAN_Class
-        except ImportError:
-            try:
-                # Альтернативный способ: импортируем и патчим
-                import PyEMD
-                from PyEMD.EMD import EMD
-                # Принудительно заменить EMD в глобальном пространстве PyEMD
-                PyEMD.EMD = EMD
-                CEEMDAN_Class = PyEMD.CEEMDAN
-                print("✅ CEEMDAN успешно импортирован из PyEMD")
-                return CEEMDAN_Class
-            except Exception as e:
-                print(f"❌ Не удалось импортировать CEEMDAN: {e}")
-                return None
+        except Exception as e:
+            print(f"❌ Не удалось импортировать CEEMDAN: {e}")
+            return None
 
 
 def ceemdan_combined_model(series, base_model_fn, title, test_size=24, model_name="CEEMDAN+X", save_plots=True):
     """Комбинированная модель CEEMDAN + базовая модель"""
     try:
         from utils.visualization import setup_plot_style
+
+        # Прежде чем использовать CEEMDAN, нужно убедиться, что EMD правильно импортирован
+        # как класс, а не модуль, чтобы внутренние вызовы CEEMDAN работали корректно
+        try:
+            # Импортируем EMD как класс и устанавливаем его в PyEMD
+            from PyEMD.EMD import EMD as EMD_Class
+            import PyEMD
+            if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
+                PyEMD.EMD = EMD_Class
+        except ImportError:
+            # Если прямой импорт EMD как класс не работает, пробуем альтернативный путь
+            try:
+                import PyEMD
+                if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
+                    # Пытаемся получить EMD класс другим способом
+                    from PyEMD import EMD as EMD_Class
+                    PyEMD.EMD = EMD_Class
+            except ImportError:
+                pass  # Если ничего не работает, продолжаем с надеждой, что CEEMDAN будет работать
 
         # Безопасное получение класса CEEMDAN
         CEEMDAN_Class = safe_import_ceemdan()
