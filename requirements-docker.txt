@@ -26,9 +26,11 @@ plotly>=5.18.0
 # Build dependencies for C extensions
 cython>=0.29.0
 
-# EMD Decomposition (will fallback to pure Python if wheel unavailable)
-# Note: PyEMD compilation takes ~10 min, but pure Python fallback is available
-PyEMD>=1.0.0,<2.0.0
+# EMD/CEEMDAN decomposition (Google Colab compatible)
+# EMD-signal preferred, pure Python SimpleCEEMDAN fallback always available
+EMD-signal>=1.0.0
 
 # Compatibility
 urllib3<2.0
+
+# Note: Pure Python SimpleCEEMDAN always available as fallback

@@ -7,41 +7,31 @@ from utils.preprocessing import infer_period
 
 
 def safe_import_ceemdan():
-    """Безопасный импорт CEEMDAN с обработкой различных версий PyEMD и fallback на чистую Python реализацию"""
+    """Безопасный импорт CEEMDAN с fallback на чистую Python реализацию"""
+    # Сначала пытаемся PyEMD (и PyEMD из EMD-signal пакета)
     try:
-        # Сначала пытаемся импортировать из PyEMD (оригинальная библиотека)
-        from PyEMD.EMD import EMD as EMD_Class
-        from PyEMD.CEEMDAN import CEEMDAN as CEEMDAN_Class
-        
-        import PyEMD
-        if not callable(PyEMD.EMD):
-            PyEMD.EMD = EMD_Class
-            
-        print("✅ CEEMDAN успешно импортирован из PyEMD (оптимизированная версия с C расширениями)")
-        return CEEMDAN_Class
+        from PyEMD import CEEMDAN as CEEMDAN_Class
+        print("✅ CEEMDAN успешно импортирован из PyEMD")
+        return CEEMDAN_Class, "PyEMD"
     except (ImportError, ModuleNotFoundError):
-        try:
-            # Альтернативный путь импорта из PyEMD
-            import PyEMD
-            try:
-                from PyEMD.EMD import EMD as EMD_Class
-                if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
-                    PyEMD.EMD = EMD_Class
-            except ImportError:
-                pass
-            
-            from PyEMD import CEEMDAN as CEEMDAN_Class
-            print("✅ CEEMDAN успешно импортирован из PyEMD")
-            return CEEMDAN_Class
-        except Exception:
-            try:
-                # Fallback: используем чистую Python реализацию для ARM64 Mac совместимости
-                from utils.ceemdan_pure_python import SimpleCEEMDAN
-                print("⚠️  PyEMD недоступен, используется чистая Python реализация CEEMDAN (может быть медленнее, но стабильнее на ARM64)")
-                return SimpleCEEMDAN
-            except Exception as e:
-                print(f"❌ Не удалось импортировать CEEMDAN: {e}")
-                return None
+        pass
+    
+    # Пытаемся EMD-signal пакет
+    try:
+        from EMD import CEEMDAN as CEEMDAN_Class
+        print("✅ CEEMDAN успешно импортирован из EMD-signal")
+        return CEEMDAN_Class, "EMD-signal"
+    except (ImportError, ModuleNotFoundError):
+        pass
+    
+    # Fallback: используем чистую Python реализацию (ВСЕГДА работает!)
+    try:
+        from utils.ceemdan_pure_python import SimpleCEEMDAN
+        print("⚠️  EMD библиотеки недоступны, используется чистая Python реализация CEEMDAN")
+        return SimpleCEEMDAN, "SimpleCEEMDAN"
+    except Exception as e:
+        print(f"❌ Не удалось импортировать CEEMDAN: {e}")
+        return None, None
 
 
 def ceemdan_combined_model(series, base_model_fn, title, test_size=24, model_name="CEEMDAN+X", save_plots=True):
@@ -49,27 +39,8 @@ def ceemdan_combined_model(series, base_model_fn, title, test_size=24, model_nam
     try:
         from utils.visualization import setup_plot_style
 
-        # Прежде чем использовать CEEMDAN, нужно убедиться, что EMD правильно импортирован
-        # как класс, а не модуль, чтобы внутренние вызовы CEEMDAN работали корректно
-        try:
-            # Импортируем EMD как класс и устанавливаем его в PyEMD
-            from PyEMD.EMD import EMD as EMD_Class
-            import PyEMD
-            if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
-                PyEMD.EMD = EMD_Class
-        except ImportError:
-            # Если прямой импорт EMD как класс не работает, пробуем альтернативный путь
-            try:
-                import PyEMD
-                if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
-                    # Пытаемся получить EMD класс другим способом
-                    from PyEMD import EMD as EMD_Class
-                    PyEMD.EMD = EMD_Class
-            except ImportError:
-                pass  # Если ничего не работает, продолжаем с надеждой, что CEEMDAN будет работать
-
-        # Безопасное получение класса CEEMDAN
-        CEEMDAN_Class = safe_import_ceemdan()
+        # Получаем класс CEEMDAN
+        CEEMDAN_Class, source = safe_import_ceemdan()
         if CEEMDAN_Class is None:
             print(f"❌ CEEMDAN недоступен. Пропускаем {model_name} прогнозирование.")
             return None, None
@@ -78,12 +49,12 @@ def ceemdan_combined_model(series, base_model_fn, title, test_size=24, model_nam
         train = series.iloc[:-test_size]
         test = series.iloc[-test_size:]
 
-        # CEEMDAN декомпозиция - ИСПРАВЛЕНО: правильное создание экземпляра
+        # CEEMDAN декомпозиция
         print("🔍 Выполняем CEEMDAN декомпозицию...")
         print(f"📊 Данные для декомпозиции: {len(train)} точек")
 
         # Создаем экземпляр CEEMDAN
-        ceemdan_instance = CEEMDAN_Class(trials=20, noise_width=0.05)
+        ceemdan_instance = CEEMDAN_Class(trials=20, noise_width=0.05) if source == "PyEMD" else CEEMDAN_Class(trials=5, noise_width=0.05)
         print("✅ CEEMDAN экземпляр успешно создан")
 
         # Выполняем декомпозицию

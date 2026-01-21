@@ -19,8 +19,10 @@ COPY requirements-docker.txt ./
 # --prefer-binary избегает компиляции если доступны prebuilt wheels
 RUN pip install --upgrade pip setuptools wheel --no-cache-dir && \
     pip install --no-cache-dir --prefer-binary cython && \
-    pip install --no-cache-dir --prefer-binary -r requirements-docker.txt || true && \
-    pip install --no-cache-dir --prefer-binary "PyEMD>=1.0.0,<2.0.0" 2>/dev/null || echo "PyEMD fallback to pure Python"
+    pip install --no-cache-dir --prefer-binary -r requirements-docker.txt || true
+
+# Пытаемся установить PyEMD, но это не критично
+RUN pip install --no-cache-dir --prefer-binary "PyEMD>=1.0.0,<2.0.0" 2>&1 || echo "⚠️  PyEMD installation skipped - will use SimpleCEEMDAN fallback"
 
 # ============================================================================
 # RUNTIME STAGE - Только необходимые компоненты (маленький образ)
@@ -47,9 +49,10 @@ COPY . .
 # Создание директории для результатов
 RUN mkdir -p results
 
-# Проверка установки основных пакетов
-RUN python -c "import numpy, pandas, scipy, tensorflow; print('✅ All core dependencies installed')" || \
-    echo "⚠️  Some dependencies may be missing but project can still run with fallbacks"
+# Проверка установки основных пакетов и CEEMDAN
+RUN python -c "import numpy, pandas, scipy, tensorflow; print('✅ Core dependencies installed')" && \
+    python -c "from utils.ceemdan_pure_python import SimpleCEEMDAN; print('✅ SimpleCEEMDAN (pure Python) available')" || \
+    echo "⚠️  Some optional dependencies may be missing but project can still run"
 
 # Команда по умолчанию
 CMD ["python", "main.py", "--mode", "synthetic"]
