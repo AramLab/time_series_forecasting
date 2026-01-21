@@ -7,30 +7,34 @@ from utils.preprocessing import infer_period
 
 
 def safe_import_ceemdan():
-    """Безопасный импорт CEEMDAN с fallback на чистую Python реализацию"""
-    # Сначала пытаемся PyEMD (и PyEMD из EMD-signal пакета)
+    """Безопасный импорт CEEMDAN с fallback на чистую Python реализацию
+    
+    В Google Colab: использует EMD-signal (быстро, C extension)
+    На Mac/Linux: использует SimpleCEEMDAN (pure Python, всегда работает)
+    """
+    # Google Colab и Linux: EMD-signal / PyEMD
     try:
         from PyEMD import CEEMDAN as CEEMDAN_Class
-        print("✅ CEEMDAN успешно импортирован из PyEMD")
+        print("✅ Используется PyEMD/EMD-signal (C extension - быстро)")
         return CEEMDAN_Class, "PyEMD"
     except (ImportError, ModuleNotFoundError):
         pass
     
-    # Пытаемся EMD-signal пакет
+    # Альтернатива: EMD из пакета EMD-signal
     try:
         from EMD import CEEMDAN as CEEMDAN_Class
-        print("✅ CEEMDAN успешно импортирован из EMD-signal")
-        return CEEMDAN_Class, "EMD-signal"
+        print("✅ Используется EMD (C extension - быстро)")
+        return CEEMDAN_Class, "EMD"
     except (ImportError, ModuleNotFoundError):
         pass
     
-    # Fallback: используем чистую Python реализацию (ВСЕГДА работает!)
+    # Fallback: ВСЕГДА работает на любой ОС (Mac, Linux, Windows)
     try:
         from utils.ceemdan_pure_python import SimpleCEEMDAN
-        print("⚠️  EMD библиотеки недоступны, используется чистая Python реализация CEEMDAN")
+        print("⚠️  Используется SimpleCEEMDAN (pure Python - стабильнее, медленнее)")
         return SimpleCEEMDAN, "SimpleCEEMDAN"
     except Exception as e:
-        print(f"❌ Не удалось импортировать CEEMDAN: {e}")
+        print(f"❌ Критическая ошибка: {e}")
         return None, None
 
 
