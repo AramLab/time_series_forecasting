@@ -1,1 +1,37 @@
-Nothing needs to be added to .gitignore since the changes only include Python source files (.py) and no build artifacts, dependencies, or temporary files.
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+results/
+*.csv
+.env
+*.log
+.pytest_cache/
+
+# Docker
+docker-compose.override.yml

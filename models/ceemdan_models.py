@@ -7,42 +7,41 @@ from utils.preprocessing import infer_period
 
 
 def safe_import_ceemdan():
-    """Безопасный импорт CEEMDAN с обработкой различных версий PyEMD"""
+    """Безопасный импорт CEEMDAN с обработкой различных версий PyEMD и fallback на чистую Python реализацию"""
     try:
-        # Принудительно импортируем EMD как класс до импорта CEEMDAN
-        # Это исправляет ошибку 'module' object is not callable
+        # Сначала пытаемся импортировать из PyEMD (оригинальная библиотека)
         from PyEMD.EMD import EMD as EMD_Class
-        
-        # Загружаем CEEMDAN напрямую
         from PyEMD.CEEMDAN import CEEMDAN as CEEMDAN_Class
         
-        # Убедимся, что EMD доступен как вызываемый класс в PyEMD
         import PyEMD
         if not callable(PyEMD.EMD):
             PyEMD.EMD = EMD_Class
             
-        print("✅ CEEMDAN успешно импортирован из PyEMD.CEEMDAN")
+        print("✅ CEEMDAN успешно импортирован из PyEMD (оптимизированная версия с C расширениями)")
         return CEEMDAN_Class
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):
         try:
-            # Альтернативный путь импорта
+            # Альтернативный путь импорта из PyEMD
             import PyEMD
-            # Сначала убедимся, что EMD правильно импортирован как класс
             try:
                 from PyEMD.EMD import EMD as EMD_Class
-                # Заменяем EMD в PyEMD, если он является модулем
                 if hasattr(PyEMD, 'EMD') and not callable(PyEMD.EMD):
                     PyEMD.EMD = EMD_Class
             except ImportError:
-                pass  # EMD может быть уже доступен как класс
+                pass
             
-            # Пытаемся импортировать CEEMDAN напрямую
             from PyEMD import CEEMDAN as CEEMDAN_Class
             print("✅ CEEMDAN успешно импортирован из PyEMD")
             return CEEMDAN_Class
-        except Exception as e:
-            print(f"❌ Не удалось импортировать CEEMDAN: {e}")
-            return None
+        except Exception:
+            try:
+                # Fallback: используем чистую Python реализацию для ARM64 Mac совместимости
+                from utils.ceemdan_pure_python import SimpleCEEMDAN
+                print("⚠️  PyEMD недоступен, используется чистая Python реализация CEEMDAN (может быть медленнее, но стабильнее на ARM64)")
+                return SimpleCEEMDAN
+            except Exception as e:
+                print(f"❌ Не удалось импортировать CEEMDAN: {e}")
+                return None
 
 
 def ceemdan_combined_model(series, base_model_fn, title, test_size=24, model_name="CEEMDAN+X", save_plots=True):
@@ -108,8 +107,7 @@ def ceemdan_combined_model(series, base_model_fn, title, test_size=24, model_nam
                     continue
 
                 # Прогнозирование IMF
-                forecast_result = base_model_fn(imf_series, f"{title} - IMF {i + 1}", test_size=test_size,
-                                                save_plots=False)
+                forecast_result = base_model_fn(imf_series, f"{title} - IMF {i + 1}", test_size=test_size)
                 if forecast_result is not None:
                     imf_forecast, metrics = forecast_result
                     if imf_forecast is not None and len(imf_forecast) >= test_size:

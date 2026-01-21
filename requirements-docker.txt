@@ -1,0 +1,34 @@
+# ============================================================================
+# Docker Requirements with optimized wheel installation
+# ============================================================================
+# Core scientific stack (prebuilt wheels available)
+numpy>=2.1.0,<2.4.0
+pandas>=2.1.0
+scipy>=1.15.0
+matplotlib>=3.8.0
+scikit-learn>=1.3.0
+
+# Time series forecasting libraries (mostly wheels)
+statsmodels>=0.14.0
+pmdarima>=2.0.4
+statsforecast>=1.6.0
+prophet>=1.1.5
+datasetsforecast>=1.0.0
+
+# Deep learning (has good wheel support)
+tensorflow>=2.14.0
+
+# Optimization & utilities
+optuna>=3.3.0
+seaborn>=0.12.2
+plotly>=5.18.0
+
+# Build dependencies for C extensions
+cython>=0.29.0
+
+# EMD Decomposition (will fallback to pure Python if wheel unavailable)
+# Note: PyEMD compilation takes ~10 min, but pure Python fallback is available
+PyEMD>=1.0.0,<2.0.0
+
+# Compatibility
+urllib3<2.0

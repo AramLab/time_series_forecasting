@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  forecasting:
+    build: .
+    container_name: time_series_forecasting
+    volumes:
+      # Монтируем директорию results для сохранения результатов на хосте
+      - ./results:/app/results
+    environment:
+      # Можно передать переменные окружения если нужно
+      PYTHONUNBUFFERED: 1
+    # Команда может быть переопределена при запуске
+    # например: docker-compose run forecasting python main.py --mode m3m4

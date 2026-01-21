@@ -71,7 +71,7 @@ class SyntheticDataAnalysis:
         print(f"\n--- ПРОГНОЗИРОВАНИЕ CEEMDAN + ARIMA ---")
         ceemdan_arima_forecast, ceemdan_arima_metrics = ceemdan_combined_model(
             series,
-            lambda s, title, test_size: auto_arima_forecast(s, title, test_size, save_plots=False),
+            lambda s, title, test_size: auto_arima_forecast(s, title, test_size),
             series.name,
             test_size=self.test_size,
             model_name="CEEMDAN+ARIMA",
@@ -87,7 +87,7 @@ class SyntheticDataAnalysis:
         print(f"\n--- ПРОГНОЗИРОВАНИЕ CEEMDAN + ETS ---")
         ceemdan_ets_forecast, ceemdan_ets_metrics = ceemdan_combined_model(
             series,
-            lambda s, title, test_size: auto_ets_forecast(s, title, test_size, save_plots=False),
+            lambda s, title, test_size: auto_ets_forecast(s, title, test_size),
             series.name,
             test_size=self.test_size,
             model_name="CEEMDAN+ETS",

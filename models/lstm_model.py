@@ -110,7 +110,6 @@ def lstm_forecast(series, title, test_size=24, save_plots=True):
                 plt.grid(True, linestyle='--', alpha=0.7)
                 plt.tight_layout()
 
-                from config.config import Config
                 save_path = Config.RESULTS_DIR / f'lstm_forecast_{title.replace(" ", "_")}.png'
                 plt.savefig(save_path, bbox_inches='tight', dpi=300)
                 plt.close()
@@ -197,7 +196,6 @@ def lstm_forecast(series, title, test_size=24, save_plots=True):
             plt.grid(True, linestyle='--', alpha=0.7)
             plt.tight_layout()
 
-            from config.config import Config
             save_path = Config.RESULTS_DIR / f'lstm_forecast_{title.replace(" ", "_")}.png'
             plt.savefig(save_path, bbox_inches='tight', dpi=300)
             plt.close()
