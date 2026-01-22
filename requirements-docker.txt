@@ -26,11 +26,14 @@ plotly>=5.18.0
 # Build dependencies for C extensions
 cython>=0.29.0
 
-# EMD/CEEMDAN decomposition (Google Colab compatible)
-# EMD-signal preferred, pure Python SimpleCEEMDAN fallback always available
+# EMD/CEEMDAN decomposition
+# Python 3.9 has prebuilt PyEMD wheels (fast installation)
+PyEMD>=1.0.0,<2.0.0
+
+# EMD-signal alternative
 EMD-signal>=1.0.0
 
 # Compatibility
 urllib3<2.0
 
-# Note: Pure Python SimpleCEEMDAN always available as fallback
+# Note: Pure Python SimpleCEEMDAN fallback always available

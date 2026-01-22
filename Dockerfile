@@ -1,7 +1,7 @@
 # ============================================================================
 # BUILDER STAGE - Сборка зависимостей (может быть кэширован)
 # ============================================================================
-FROM python:3.10-slim-bullseye as builder
+FROM python:3.9-slim-bullseye as builder
 
 # Установка системных зависимостей для сборки
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir --prefer-binary "PyEMD>=1.0.0,<2.0.0" 2>&1 || ech
 # ============================================================================
 # RUNTIME STAGE - Только необходимые компоненты (маленький образ)
 # ============================================================================
-FROM python:3.10-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 WORKDIR /app
 
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Копирование установленных пакетов из builder
-COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Копирование кода проекта (этот слой часто меняется, поэтому он последний)
