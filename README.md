@@ -52,8 +52,8 @@ pip install -r requirements.txt
 # Run with synthetic data
 python main.py --mode synthetic --test-size 12
 
-# Run with M3 competition data
-python main.py --mode m3 --max-rows 10
+# Run with M3 and M4 competition data
+python main.py --mode m3m4 --max-series 10
 
 # Run with custom CSV
 python main.py --mode csv --file data.csv --test-size 12
@@ -78,11 +78,9 @@ docker-compose up
 python main.py [OPTIONS]
 
 Options:
-  --mode {synthetic,m3,m4,csv}    Data source mode (default: synthetic)
+  --mode {synthetic,m3m4,all}    Data source mode (default: synthetic)
   --test-size INT                 Number of test samples (default: 12)
-  --file PATH                     Path to CSV file (required for --mode csv)
-  --max-rows INT                  Maximum rows to process from M3/M4 (default: 10)
-  --verbose                       Enable verbose output
+  --max-series INT                Maximum series to process from M3/M4 (default: 10)
 ```
 
 ### Project Structure
@@ -222,8 +220,8 @@ pip install -r requirements.txt
 # Запустить с синтетическими данными
 python main.py --mode synthetic --test-size 12
 
-# Запустить с данными конкурса M3
-python main.py --mode m3 --max-rows 10
+# Запустить с данными конкурса M3 и M4
+python main.py --mode m3m4 --max-series 10
 
 # Запустить с пользовательским CSV
 python main.py --mode csv --file data.csv --test-size 12
@@ -248,11 +246,9 @@ docker-compose up
 python main.py [OPTIONS]
 
 Параметры:
-  --mode {synthetic,m3,m4,csv}    Источник данных (по умолчанию: synthetic)
+  --mode {synthetic,m3m4,all}    Источник данных (по умолчанию: synthetic)
   --test-size INT                 Количество тестовых образцов (по умолчанию: 12)
-  --file PATH                     Путь к CSV файлу (требуется для --mode csv)
-  --max-rows INT                  Макс. строк из M3/M4 (по умолчанию: 10)
-  --verbose                       Подробный вывод
+  --max-series INT                Макс. рядов из M3/M4 (по умолчанию: 10)
 ```
 
 ### Структура проекта
