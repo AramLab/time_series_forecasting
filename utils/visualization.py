@@ -74,12 +74,21 @@ def plot_aggregated_results(summary_m3, summary_m4, results_dir):
     """Визуализация агрегированных результатов"""
     setup_plot_style()
 
+    # Since we're using Prophet for M3/M4 analysis, add a Model column to indicate this
+    if summary_m3 is not None and not summary_m3.empty:
+        summary_m3 = summary_m3.copy()
+        summary_m3['Model'] = 'Prophet'
+
+    if summary_m4 is not None and not summary_m4.empty:
+        summary_m4 = summary_m4.copy()
+        summary_m4['Model'] = 'Prophet'
+
     # 1. Сравнение моделей по sMAPE для M3 и M4
-    if summary_m3 is not None and summary_m4 is not None:
+    if summary_m3 is not None and summary_m4 is not None and not summary_m3.empty and not summary_m4.empty:
         plt.figure(figsize=(15, 10))
 
-        m3_means = summary_m3.groupby('Model')['sMAPE (%)'].mean().sort_values()
-        m4_means = summary_m4.groupby('Model')['sMAPE (%)'].mean().sort_values()
+        m3_means = summary_m3.groupby('Model')['sMAPE'].mean().sort_values()
+        m4_means = summary_m4.groupby('Model')['sMAPE'].mean().sort_values()
 
         x = np.arange(len(m3_means.index))
         width = 0.35
@@ -88,7 +97,7 @@ def plot_aggregated_results(summary_m3, summary_m4, results_dir):
         plt.bar(x + width / 2, m4_means.values, width, label='M4', alpha=0.8, color='#4ECDC4')
 
         plt.xlabel('Модель', fontsize=14)
-        plt.ylabel('Средний sMAPE (%)', fontsize=14)
+        plt.ylabel('Средний sMAPE', fontsize=14)
         plt.title('Сравнение моделей по среднему sMAPE между M3 и M4', fontsize=16, fontweight='bold')
         plt.xticks(x, m3_means.index, rotation=45, ha='right', fontsize=12)
         plt.legend(fontsize=12)
@@ -99,24 +108,24 @@ def plot_aggregated_results(summary_m3, summary_m4, results_dir):
         plt.close()
 
     # 2. Распределение sMAPE по моделям для каждого набора данных
-    if summary_m3 is not None:
+    if summary_m3 is not None and not summary_m3.empty:
         plt.figure(figsize=(15, 10))
-        sns.boxplot(data=summary_m3, x='Model', y='sMAPE (%)', palette='viridis')
+        sns.boxplot(data=summary_m3, x='Model', y='sMAPE', palette='viridis')
         plt.xticks(rotation=45, ha='right', fontsize=12)
         plt.xlabel('Модель', fontsize=14)
-        plt.ylabel('sMAPE (%)', fontsize=14)
+        plt.ylabel('sMAPE', fontsize=14)
         plt.title('Распределение sMAPE по моделям для набора данных M3', fontsize=16, fontweight='bold')
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
         plt.savefig(f"{results_dir}/smase_distribution_m3.png", bbox_inches='tight', dpi=300)
         plt.close()
 
-    if summary_m4 is not None:
+    if summary_m4 is not None and not summary_m4.empty:
         plt.figure(figsize=(15, 10))
-        sns.boxplot(data=summary_m4, x='Model', y='sMAPE (%)', palette='viridis')
+        sns.boxplot(data=summary_m4, x='Model', y='sMAPE', palette='viridis')
         plt.xticks(rotation=45, ha='right', fontsize=12)
         plt.xlabel('Модель', fontsize=14)
-        plt.ylabel('sMAPE (%)', fontsize=14)
+        plt.ylabel('sMAPE', fontsize=14)
         plt.title('Распределение sMAPE по моделям для набора данных M4', fontsize=16, fontweight='bold')
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
