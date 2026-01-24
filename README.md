@@ -31,6 +31,11 @@ A comprehensive time series forecasting platform that combines multiple forecast
   - M4 competition datasets
   - Custom CSV files
 
+- **Flexible Data Selection**
+  - Run separately on M3 or M4 datasets
+  - Option to specify number of series to process
+  - Support for combined M3+M4 analysis
+
 - **Comprehensive Analysis**
   - Automatic hyperparameter optimization
   - Performance metrics (RMSE, MAE, sMAPE, MASE)
@@ -52,8 +57,17 @@ pip install -r requirements.txt
 # Run with synthetic data
 python main.py --mode synthetic --test-size 12
 
-# Run with M3 and M4 competition data
+# Run with M3 data only
+python main.py --mode m3 --max-series 10
+
+# Run with M4 data only
+python main.py --mode m4 --max-series 10
+
+# Run with M3+M4 data
 python main.py --mode m3m4 --max-series 10
+
+# Run with all available data
+python main.py --mode all --max-series 10
 
 # Run with custom CSV
 python main.py --mode csv --file data.csv --test-size 12
@@ -78,9 +92,9 @@ docker-compose up
 python main.py [OPTIONS]
 
 Options:
-  --mode {synthetic,m3m4,all}    Data source mode (default: synthetic)
-  --test-size INT                 Number of test samples (default: 12)
-  --max-series INT                Maximum series to process from M3/M4 (default: 10)
+  --mode {synthetic,m3,m4,m3m4,all}    Data source mode (default: synthetic)
+  --test-size INT                      Number of test samples (default: 12)
+  --max-series INT                     Maximum series to process from M3/M4 (default: 10)
 ```
 
 ### Project Structure
@@ -199,6 +213,11 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
   - Датасеты конкурса M4
   - Пользовательские CSV файлы
 
+- **Гибкий выбор данных**
+  - Запуск только на данных M3 или M4
+  - Возможность указать количество обрабатываемых рядов
+  - Поддержка комбинированного анализа M3+M4
+
 - **Комплексный анализ**
   - Автоматическая оптимизация гиперпараметров
   - Метрики производительности (RMSE, MAE, sMAPE, MASE)
@@ -220,8 +239,17 @@ pip install -r requirements.txt
 # Запустить с синтетическими данными
 python main.py --mode synthetic --test-size 12
 
-# Запустить с данными конкурса M3 и M4
+# Запустить только с данными M3
+python main.py --mode m3 --max-series 10
+
+# Запустить только с данными M4
+python main.py --mode m4 --max-series 10
+
+# Запустить с данными M3+M4
 python main.py --mode m3m4 --max-series 10
+
+# Запустить со всеми доступными данными
+python main.py --mode all --max-series 10
 
 # Запустить с пользовательским CSV
 python main.py --mode csv --file data.csv --test-size 12
@@ -245,10 +273,10 @@ docker-compose up
 ```
 python main.py [OPTIONS]
 
-Параметры:
-  --mode {synthetic,m3m4,all}    Источник данных (по умолчанию: synthetic)
-  --test-size INT                 Количество тестовых образцов (по умолчанию: 12)
-  --max-series INT                Макс. рядов из M3/M4 (по умолчанию: 10)
+Options:
+  --mode {synthetic,m3,m4,m3m4,all}    Источник данных (по умолчанию: synthetic)
+  --test-size INT                      Количество тестовых образцов (по умолчанию: 12)
+  --max-series INT                     Макс. рядов из M3/M4 (по умолчанию: 10)
 ```
 
 ### Структура проекта
@@ -340,4 +368,4 @@ MIT License - см. файл LICENSE для подробностей
 
 ---
 
-**Last Updated**: January 22, 2026
+**Last Updated**: January 24, 2026
