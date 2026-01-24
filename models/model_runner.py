@@ -54,6 +54,106 @@ def run_all_models(series_id, values, dataset_name="M3", test_size=12):
     except Exception as e:
         print(f"❌ Ошибка при запуске LSTM для {series_id}: {str(e)}")
     
+    # Запуск CEEMDAN+ARIMA (если возможно)
+    try:
+        from models.ceemdan_models import ceemdan_combined_model
+        from models.arima_model import run_simple_arima
+        
+        # Создаем функцию для внутреннего вызова ARIMA
+        def arima_wrapper(series, title, test_size):
+            try:
+                values = series.values if hasattr(series, 'values') else series
+                result = run_simple_arima(series_id, values, dataset_name, test_size)
+                if result and result['success']:
+                    # Convert forecast to appropriate format
+                    forecast_values = result.get('forecast_values')
+                    if forecast_values is not None:
+                        forecast_series = pd.Series(forecast_values[-test_size:], 
+                                                   index=series.index[-test_size:] if hasattr(series, 'index') else range(len(series)-test_size, len(series)))
+                        return forecast_series, result
+                return None, None
+            except Exception as e:
+                print(f"❌ Ошибка во внутреннем вызове ARIMA: {str(e)}")
+                return None, None
+                
+        ceemdan_arima_result = ceemdan_combined_model(
+            pd.Series(values),
+            arima_wrapper,
+            f"{series_id}",
+            test_size=test_size,
+            model_name="CEEMDAN+ARIMA",
+            save_plots=False
+        )
+        
+        if ceemdan_arima_result and ceemdan_arima_result[0] is not None:
+            _, metrics = ceemdan_arima_result
+            # Convert metrics to standard format
+            ceemdan_arima_formatted = {
+                'success': True,
+                'series_id': series_id,
+                'dataset': dataset_name,
+                'sMAPE': metrics.get('sMAPE (%)', float('inf')),
+                'RMSE': metrics.get('RMSE', float('inf')),
+                'MAE': metrics.get('MAE', float('inf')),
+                'forecast_values': ceemdan_arima_result[0].values if hasattr(ceemdan_arima_result[0], 'values') else ceemdan_arima_result[0],
+                'metrics': metrics
+            }
+            results['CEEMDAN+ARIMA'] = ceemdan_arima_formatted
+    except ImportError:
+        print("⚠️ CEEMDAN+ARIMA модель недоступна")
+    except Exception as e:
+        print(f"❌ Ошибка при запуске CEEMDAN+ARIMA для {series_id}: {str(e)}")
+    
+    # Запуск CEEMDAN+ETS (если возможно)
+    try:
+        from models.ceemdan_models import ceemdan_combined_model
+        from models.ets_model import run_simple_ets
+        
+        # Создаем функцию для внутреннего вызова ETS
+        def ets_wrapper(series, title, test_size):
+            try:
+                values = series.values if hasattr(series, 'values') else series
+                result = run_simple_ets(series_id, values, dataset_name, test_size)
+                if result and result['success']:
+                    # Convert forecast to appropriate format
+                    forecast_values = result.get('forecast_values')
+                    if forecast_values is not None:
+                        forecast_series = pd.Series(forecast_values[-test_size:], 
+                                                   index=series.index[-test_size:] if hasattr(series, 'index') else range(len(series)-test_size, len(series)))
+                        return forecast_series, result
+                return None, None
+            except Exception as e:
+                print(f"❌ Ошибка во внутреннем вызове ETS: {str(e)}")
+                return None, None
+                
+        ceemdan_ets_result = ceemdan_combined_model(
+            pd.Series(values),
+            ets_wrapper,
+            f"{series_id}",
+            test_size=test_size,
+            model_name="CEEMDAN+ETS",
+            save_plots=False
+        )
+        
+        if ceemdan_ets_result and ceemdan_ets_result[0] is not None:
+            _, metrics = ceemdan_ets_result
+            # Convert metrics to standard format
+            ceemdan_ets_formatted = {
+                'success': True,
+                'series_id': series_id,
+                'dataset': dataset_name,
+                'sMAPE': metrics.get('sMAPE (%)', float('inf')),
+                'RMSE': metrics.get('RMSE', float('inf')),
+                'MAE': metrics.get('MAE', float('inf')),
+                'forecast_values': ceemdan_ets_result[0].values if hasattr(ceemdan_ets_result[0], 'values') else ceemdan_ets_result[0],
+                'metrics': metrics
+            }
+            results['CEEMDAN+ETS'] = ceemdan_ets_formatted
+    except ImportError:
+        print("⚠️ CEEMDAN+ETS модель недоступна")
+    except Exception as e:
+        print(f"❌ Ошибка при запуске CEEMDAN+ETS для {series_id}: {str(e)}")
+    
     return results
 
 
