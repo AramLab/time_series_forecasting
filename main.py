@@ -9,8 +9,8 @@ def parse_arguments():
     """Парсинг аргументов командной строки"""
     parser = argparse.ArgumentParser(description='Прогнозирование временных рядов с использованием различных моделей')
 
-    parser.add_argument('--mode', type=str, choices=['synthetic', 'm3m4', 'all'], default='all',
-                        help='Режим анализа: synthetic - синтетические данные, m3m4 - данные M3/M4, all - все')
+    parser.add_argument('--mode', type=str, choices=['synthetic', 'm3', 'm4', 'm3m4', 'all'], default='all',
+                        help='Режим анализа: synthetic - синтетические данные, m3 - данные M3, m4 - данные M4, m3m4 - данные M3/M4, all - все')
 
     parser.add_argument('--max-series', type=int, default=10,
                         help='Максимальное количество рядов для анализа в каждом наборе данных M3/M4')
@@ -49,12 +49,20 @@ def main():
             synthetic_analysis = SyntheticDataAnalysis()
             synthetic_analysis.run_all_analyses()
 
-        if args.mode in ['m3m4', 'all']:
+        if args.mode in ['m3', 'm4', 'm3m4', 'all']:
             print("\n" + "=" * 80)
             print("ЗАПУСК АНАЛИЗА ДАННЫХ M3 И M4")
             print("=" * 80)
             m3m4_analysis = M3M4Analysis(max_series_per_dataset=args.max_series)
-            m3m4_analysis.run_analysis()
+            
+            if args.mode == 'm3':
+                print("Запуск анализа только для M3")
+                m3m4_analysis.run_analysis_m3_only()
+            elif args.mode == 'm4':
+                print("Запуск анализа только для M4")
+                m3m4_analysis.run_analysis_m4_only()
+            else:  # m3m4 or all
+                m3m4_analysis.run_analysis()
 
         print(f"\n{'=' * 80}")
         print("АНАЛИЗ ЗАВЕРШЕН УСПЕШНО!")

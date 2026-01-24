@@ -32,6 +32,40 @@ class M3M4Analysis:
 
         # Агрегированный анализ
         self.aggregate_results()
+    
+    def run_analysis_m3_only(self):
+        """Запуск анализа только данных M3"""
+        print("=== АНАЛИЗ ДАННЫХ M3 ===")
+
+        # Загрузка данных
+        m3_df = DataLoader.load_m3_data()
+
+        if m3_df is None:
+            print("Ошибка при загрузке данных M3. Анализ невозможен.")
+            return
+
+        # Анализ M3
+        self.analyze_dataset(m3_df, "M3")
+
+        # Агрегированный анализ
+        self.aggregate_results_m3()
+        
+    def run_analysis_m4_only(self):
+        """Запуск анализа только данных M4"""
+        print("=== АНАЛИЗ ДАННЫХ M4 ===")
+
+        # Загрузка данных
+        m4_df = DataLoader.load_m4_data()
+
+        if m4_df is None:
+            print("Ошибка при загрузке данных M4. Анализ невозможен.")
+            return
+
+        # Анализ M4
+        self.analyze_dataset(m4_df, "M4")
+
+        # Агрегированный анализ
+        self.aggregate_results_m4()
 
     def analyze_dataset(self, df, dataset_name):
         """Анализ одного набора данных (M3 или M4)"""
@@ -66,28 +100,45 @@ class M3M4Analysis:
             # Извлечение значений
             values = series_data['y'].values
 
-            # Прогнозирование с помощью Prophet
-            result = run_simple_prophet(series_id, values, dataset_name, Config.TEST_SIZE)
+            # Запуск всех моделей
+            from models.model_runner import run_all_models
+            results = run_all_models(series_id, values, dataset_name, Config.TEST_SIZE)
 
-            if result and result['success']:
+            if results:
+                # Получение лучшего результата
+                from models.model_runner import get_best_model_result
+                best_result = get_best_model_result(results)
+                
                 # Сохранение результатов
                 result_data = {
                     'Dataset': dataset_name,
                     'Series_ID': series_id,
-                    'sMAPE': result['sMAPE'],
-                    'RMSE': result['RMSE'],
-                    'MAE': result['MAE'],
+                    'sMAPE': best_result['sMAPE'],
+                    'RMSE': best_result['RMSE'],
+                    'MAE': best_result['MAE'],
+                    'Best_Model': best_result['Best_Model'],
                     'Length': len(values),
                     'Mean': np.mean(values),
                     'Std': np.std(values)
                 }
+
+                # Добавление результатов по каждой модели
+                for model_name, model_result in results.items():
+                    result_data[f'{model_name}_sMAPE'] = model_result['sMAPE']
+                    result_data[f'{model_name}_RMSE'] = model_result['RMSE']
+                    result_data[f'{model_name}_MAE'] = model_result['MAE']
 
                 if dataset_name == "M3":
                     self.results_m3.append(result_data)
                 else:
                     self.results_m4.append(result_data)
 
-                print(f"✅ Успешно: sMAPE = {result['sMAPE']:.2f}%")
+                print(f"✅ Успешно: Лучшая модель - {best_result['Best_Model']}, sMAPE = {best_result['sMAPE']:.2f}%")
+                
+                # Вывод результатов по всем моделям
+                print(f"📊 Результаты по моделям:")
+                for model_name, model_result in results.items():
+                    print(f"   {model_name}: sMAPE = {model_result['sMAPE']:.2f}%")
             else:
                 print(f"❌ Не удалось выполнить прогноз")
 
@@ -131,3 +182,49 @@ class M3M4Analysis:
             # Визуализация результатов
             plot_aggregated_results(summary_m3, summary_m4, str(Config.RESULTS_DIR))
             print("✅ Графики агрегированных результатов сохранены")
+    
+    def aggregate_results_m3(self):
+        """Агрегация и анализ результатов только для M3"""
+        print(f"\n{'=' * 80}")
+        print("АГРЕГИРОВАННЫЙ АНАЛИЗ РЕЗУЛЬТАТОВ M3")
+        print(f"{'=' * 80}")
+
+        # Создание DataFrame с результатами
+        if self.results_m3:
+            summary_m3 = pd.DataFrame(self.results_m3)
+            summary_m3.to_csv(Config.RESULTS_DIR / 'm3_results.csv', index=False)
+            print(f"✅ Результаты M3 сохранены в {Config.RESULTS_DIR / 'm3_results.csv'}")
+
+            # Статистический анализ
+            print(f"\n{'=' * 60}")
+            print("СТАТИСТИКА M3")
+            print(f"{'=' * 60}")
+
+            print(f"\nM3:")
+            print(f"  Средний sMAPE: {summary_m3['sMAPE'].mean():.2f}%")
+            print(f"  Средний RMSE: {summary_m3['RMSE'].mean():.2f}")
+            print(f"  Средний MAE: {summary_m3['MAE'].mean():.2f}")
+            print(f"  Количество рядов: {len(summary_m3)}")
+
+    def aggregate_results_m4(self):
+        """Агрегация и анализ результатов только для M4"""
+        print(f"\n{'=' * 80}")
+        print("АГРЕГИРОВАННЫЙ АНАЛИЗ РЕЗУЛЬТАТОВ M4")
+        print(f"{'=' * 80}")
+
+        # Создание DataFrame с результатами
+        if self.results_m4:
+            summary_m4 = pd.DataFrame(self.results_m4)
+            summary_m4.to_csv(Config.RESULTS_DIR / 'm4_results.csv', index=False)
+            print(f"✅ Результаты M4 сохранены в {Config.RESULTS_DIR / 'm4_results.csv'}")
+
+            # Статистический анализ
+            print(f"\n{'=' * 60}")
+            print("СТАТИСТИКА M4")
+            print(f"{'=' * 60}")
+
+            print(f"\nM4:")
+            print(f"  Средний sMAPE: {summary_m4['sMAPE'].mean():.2f}%")
+            print(f"  Средний RMSE: {summary_m4['RMSE'].mean():.2f}")
+            print(f"  Средний MAE: {summary_m4['MAE'].mean():.2f}")
+            print(f"  Количество рядов: {len(summary_m4)}")
