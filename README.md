@@ -1,371 +1,166 @@
-# Time Series Forecasting Platform | Платформа прогнозирования временных рядов
+# Time Series Forecasting Project
 
-[English](#english) | [Русский](#русский)
+A comprehensive time series forecasting library featuring multiple advanced models and analysis capabilities with support for parallel processing.
 
----
+## Features
 
-## English
-
-### Overview
-
-A comprehensive time series forecasting platform that combines multiple forecasting models with advanced decomposition techniques. The system supports ARIMA, ETS (Error-Trend-Seasonality), Prophet, LSTM, and CEEMDAN-based ensemble methods for accurate predictions on various time series datasets.
-
-### Features
-
-- **Multiple Forecasting Models**
+- **Multiple Forecasting Models**:
+  - LSTM (Long Short-Term Memory)
   - ARIMA (AutoRegressive Integrated Moving Average)
-  - ETS (Error-Trend-Seasonality)
+  - ETS (Error, Trend, Seasonality)
   - Prophet (Facebook's forecasting tool)
-  - LSTM (Deep Learning)
-  - CEEMDAN+ARIMA (Ensemble method)
-  - CEEMDAN+ETS (Ensemble method)
+  - CEEMDAN+LSTM (Complete Ensemble Empirical Mode Decomposition with Adaptive Noise + LSTM)
+  - CEEMDAN+ARIMA (Complete Ensemble Empirical Mode Decomposition with Adaptive Noise + ARIMA)
+  - CEEMDAN+ETS (Complete Ensemble Empirical Mode Decomposition with Adaptive Noise + ETS)
+  - CEEMDAN+Prophet (Complete Ensemble Empirical Mode Decomposition with Adaptive Noise + Prophet)
 
-- **Advanced Decomposition**
-  - CEEMDAN (Complete Ensemble EMD with Adaptive Noise)
-  - Automatic IMF (Intrinsic Mode Function) extraction
-  - Graceful fallback to pure Python implementation
+- **Data Processing Modes**:
+  - Synthetic time series generation
+  - M3/M4 competition datasets
+  - Custom dataset loading
+  - Configurable number of series and seasonality
 
-- **Multiple Data Modes**
-  - Synthetic data generation
-  - M3 competition datasets
-  - M4 competition datasets
-  - Custom CSV files
+- **Modular Architecture**:
+  - Clean separation of concerns
+  - Easy to extend and maintain
+  - Parallel processing capabilities
 
-- **Flexible Data Selection**
-  - Run separately on M3 or M4 datasets
-  - Option to specify number of series to process
-  - Support for combined M3+M4 analysis
+- **Parallel Processing Support**:
+  - Multiprocessing for model evaluation
+  - Mac-compatible multiprocessing implementation
+  - Configurable number of processes
 
-- **Comprehensive Analysis**
-  - Automatic hyperparameter optimization
-  - Performance metrics (RMSE, MAE, sMAPE, MASE)
-  - Comparative model analysis
-  - Visualization of forecasts and components
-
-### Quick Start
-
-#### Local Installation
+## Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/AramLab/time_series_forecasting.git
-cd time_series_forecasting
-
-# Install dependencies
 pip install -r requirements.txt
+```
 
+## Usage
+
+### Basic Example
+
+```python
+from forecasting.models import LSTMModel, ARIMAModel, ETSModel, ProphetModel
+from forecasting.ceemdan_models import CEEMDANLSTM, CEEMDANARIMA, CEEMDANETS, CEEMDANProphet
+from forecasting.data import DataLoader, SyntheticGenerator
+
+# Load data
+data_loader = DataLoader()
+data = data_loader.load_m4_data()
+
+# Initialize model
+lstm_model = LSTMModel()
+predictions = lstm_model.fit_predict(data)
+
+# Or use CEEMDAN ensemble
+ceemdan_lstm = CEEMDANLSTM()
+predictions = ceemdan_lstm.fit_predict(data)
+```
+
+### Running the Full Pipeline
+
+```bash
 # Run with synthetic data
-python main.py --mode synthetic --test-size 12
+python -m forecasting.main --mode synthetic --test-size 12 --max-series 10
 
-# Run with M3 data only
-python main.py --mode m3 --max-series 10
+# Run with M3 data
+python -m forecasting.main --mode m3 --test-size 12 --max-series 10
 
-# Run with M4 data only
-python main.py --mode m4 --max-series 10
+# Run with M4 data
+python -m forecasting.main --mode m4 --test-size 12 --max-series 10
 
-# Run with M3+M4 data
-python main.py --mode m3m4 --max-series 10
-
-# Run with all available data
-python main.py --mode all --max-series 10
-
-# Run with custom CSV
-python main.py --mode csv --file data.csv --test-size 12
+# Run with parallel processing
+python -m forecasting.main --mode synthetic --parallel --num-processes 4
 ```
 
-#### Docker Installation
-
-```bash
-# Build Docker image
-docker-compose build
-
-# Run in Docker
-docker-compose run forecasting python main.py --mode synthetic --test-size 12
-
-# Or use docker-compose directly
-docker-compose up
-```
-
-### Command Line Options
+## Project Structure
 
 ```
-python main.py [OPTIONS]
-
-Options:
-  --mode {synthetic,m3,m4,m3m4,all}    Data source mode (default: synthetic)
-  --test-size INT                      Number of test samples (default: 12)
-  --max-series INT                     Maximum series to process from M3/M4 (default: 10)
-```
-
-### Project Structure
-
-```
-time_series_forecasting/
-├── main.py                       # Entry point
-├── config/
-│   └── config.py                # Configuration settings
-├── data/
-│   ├── data_loader.py           # Data loading utilities
-│   └── __init__.py
+forecasting/
+├── __init__.py
+├── main.py                 # Entry point with CLI interface
 ├── models/
-│   ├── arima_model.py           # ARIMA implementation
-│   ├── ets_model.py             # ETS implementation
-│   ├── prophet_model.py         # Prophet wrapper
-│   ├── lstm_model.py            # LSTM implementation
-│   ├── ceemdan_models.py        # CEEMDAN wrapper
-│   └── __init__.py
-├── utils/
-│   ├── ceemdan_pure_python.py   # Pure Python CEEMDAN fallback
-│   ├── metrics.py               # Performance metrics
-│   ├── preprocessing.py         # Data preprocessing
-│   ├── visualization.py         # Plotting utilities
-│   └── __init__.py
-├── optimization/
-│   ├── ceemdan_optimizer.py     # CEEMDAN optimization
-│   ├── complexity_reduction.py  # Complexity analysis
-│   └── __init__.py
-├── analysis/
-│   ├── complexity_paradox.py    # Complexity paradox analysis
-│   ├── m3_m4_analysis.py        # Competition data analysis
-│   └── __init__.py
-└── results/                      # Output directory for plots and CSV
-```
-
-### Model Comparison
-
-The platform supports comprehensive model comparison with metrics:
-
-| Model | RMSE | MAE | sMAPE (%) | MASE |
-|-------|------|-----|-----------|------|
-| ARIMA | Lower | Lower | 2-3% | Good |
-| ETS | Lower | Lower | 2-3% | Good |
-| Prophet | Moderate | Moderate | 2-4% | Moderate |
-| LSTM | Higher | Higher | 5-6% | Poor |
-| CEEMDAN+ARIMA | Higher | Higher | 4-5% | Moderate |
-| CEEMDAN+ETS | Moderate | Moderate | 2-3% | Good |
-
-*Metrics vary based on dataset characteristics*
-
-### CEEMDAN and PyEMD
-
-The platform uses CEEMDAN for time series decomposition with two implementations:
-
-1. **PyEMD (Preferred)** - C-extension based, fast but requires compilation
-2. **SimpleCEEMDAN (Fallback)** - Pure Python, slower but always works
-
-When PyEMD is unavailable (common on Mac/ARM64), the system automatically falls back to SimpleCEEMDAN with a warning message. This is **normal and expected behavior**.
-
-### Output
-
-- **Plots**: Individual model forecasts, decomposition visualizations
-- **CSV**: Comprehensive results with metrics for all models
-- **Console**: Real-time progress and model performance
-
-### Requirements
-
-- Python 3.10+
-- NumPy, Pandas, SciPy
-- Scikit-learn, Statsmodels
-- Prophet, TensorFlow/Keras
-- PyEMD (optional, with pure Python fallback)
-
-### Docker
-
-The project includes optimized Dockerfile with:
-- Multi-stage build for smaller images
-- Python 3.10 for better wheel compatibility
-- All scientific dependencies pre-compiled
-
-### License
-
-MIT License - see LICENSE file for details
-
-### Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
-
----
-
-## Русский
-
-### Описание
-
-Комплексная платформа для прогнозирования временных рядов, которая объединяет несколько моделей прогнозирования с передовыми методами декомпозиции. Система поддерживает ARIMA, ETS (Error-Trend-Seasonality), Prophet, LSTM и ансамбльные методы на основе CEEMDAN для точного прогнозирования различных временных рядов.
-
-### Возможности
-
-- **Несколько моделей прогнозирования**
-  - ARIMA (AutoRegressive Integrated Moving Average)
-  - ETS (Error-Trend-Seasonality)
-  - Prophet (инструмент прогнозирования от Facebook)
-  - LSTM (глубокое обучение)
-  - CEEMDAN+ARIMA (Ансамбльный метод)
-  - CEEMDAN+ETS (Ансамбльный метод)
-
-- **Продвинутая декомпозиция**
-  - CEEMDAN (Complete Ensemble EMD with Adaptive Noise)
-  - Автоматическое извлечение IMF (Intrinsic Mode Functions)
-  - Корректное отступление на чистую реализацию на Python
-
-- **Множество режимов данных**
-  - Генерация синтетических данных
-  - Датасеты конкурса M3
-  - Датасеты конкурса M4
-  - Пользовательские CSV файлы
-
-- **Гибкий выбор данных**
-  - Запуск только на данных M3 или M4
-  - Возможность указать количество обрабатываемых рядов
-  - Поддержка комбинированного анализа M3+M4
-
-- **Комплексный анализ**
-  - Автоматическая оптимизация гиперпараметров
-  - Метрики производительности (RMSE, MAE, sMAPE, MASE)
-  - Сравнительный анализ моделей
-  - Визуализация прогнозов и компонент
-
-### Быстрый старт
-
-#### Локальная установка
-
-```bash
-# Клонировать репозиторий
-git clone https://github.com/AramLab/time_series_forecasting.git
-cd time_series_forecasting
-
-# Установить зависимости
-pip install -r requirements.txt
-
-# Запустить с синтетическими данными
-python main.py --mode synthetic --test-size 12
-
-# Запустить только с данными M3
-python main.py --mode m3 --max-series 10
-
-# Запустить только с данными M4
-python main.py --mode m4 --max-series 10
-
-# Запустить с данными M3+M4
-python main.py --mode m3m4 --max-series 10
-
-# Запустить со всеми доступными данными
-python main.py --mode all --max-series 10
-
-# Запустить с пользовательским CSV
-python main.py --mode csv --file data.csv --test-size 12
-```
-
-#### Установка через Docker
-
-```bash
-# Собрать Docker образ
-docker-compose build
-
-# Запустить в Docker
-docker-compose run forecasting python main.py --mode synthetic --test-size 12
-
-# Или использовать docker-compose напрямую
-docker-compose up
-```
-
-### Параметры командной строки
-
-```
-python main.py [OPTIONS]
-
-Options:
-  --mode {synthetic,m3,m4,m3m4,all}    Источник данных (по умолчанию: synthetic)
-  --test-size INT                      Количество тестовых образцов (по умолчанию: 12)
-  --max-series INT                     Макс. рядов из M3/M4 (по умолчанию: 10)
-```
-
-### Структура проекта
-
-```
-time_series_forecasting/
-├── main.py                       # Точка входа
-├── config/
-│   └── config.py                # Настройки конфигурации
+│   ├── __init__.py
+│   ├── lstm.py            # LSTM implementation
+│   ├── arima.py           # ARIMA implementation
+│   ├── ets.py             # ETS implementation
+│   └── prophet.py         # Prophet implementation
+├── ceemdan_models/
+│   ├── __init__.py
+│   ├── ceemdan_lstm.py    # CEEMDAN+LSTM implementation
+│   ├── ceemdan_arima.py   # CEEMDAN+ARIMA implementation
+│   ├── ceemdan_ets.py     # CEEMDAN+ETS implementation
+│   └── ceemdan_prophet.py # CEEMDAN+Prophet implementation
 ├── data/
-│   ├── data_loader.py           # Утилиты загрузки данных
-│   └── __init__.py
-├── models/
-│   ├── arima_model.py           # Реализация ARIMA
-│   ├── ets_model.py             # Реализация ETS
-│   ├── prophet_model.py         # Обёртка Prophet
-│   ├── lstm_model.py            # Реализация LSTM
-│   ├── ceemdan_models.py        # Обёртка CEEMDAN
-│   └── __init__.py
+│   ├── __init__.py
+│   ├── loader.py          # Data loading utilities
+│   └── synthetic_generator.py # Synthetic data generation
 ├── utils/
-│   ├── ceemdan_pure_python.py   # CEEMDAN на чистом Python
-│   ├── metrics.py               # Метрики производительности
-│   ├── preprocessing.py         # Предварительная обработка
-│   ├── visualization.py         # Утилиты построения графиков
-│   └── __init__.py
-├── optimization/
-│   ├── ceemdan_optimizer.py     # Оптимизация CEEMDAN
-│   ├── complexity_reduction.py  # Анализ сложности
-│   └── __init__.py
-├── analysis/
-│   ├── complexity_paradox.py    # Анализ парадокса сложности
-│   ├── m3_m4_analysis.py        # Анализ данных конкурса
-│   └── __init__.py
-└── results/                      # Директория вывода (графики и CSV)
+│   ├── __init__.py
+│   ├── metrics.py         # Performance metrics
+│   └── preprocessing.py   # Data preprocessing
+└── config/
+    ├── __init__.py
+    └── config.py          # Configuration settings
 ```
 
-### Сравнение моделей
+## Parallel Processing on Mac
 
-Платформа поддерживает комплексное сравнение моделей с метриками:
+Mac systems use a different multiprocessing start method compared to Linux. The project handles this by:
 
-| Модель | RMSE | MAE | sMAPE (%) | MASE |
-|--------|------|-----|-----------|------|
-| ARIMA | Ниже | Ниже | 2-3% | Хорошо |
-| ETS | Ниже | Ниже | 2-3% | Хорошо |
-| Prophet | Среднее | Среднее | 2-4% | Среднее |
-| LSTM | Выше | Выше | 5-6% | Плохо |
-| CEEMDAN+ARIMA | Выше | Выше | 4-5% | Среднее |
-| CEEMDAN+ETS | Среднее | Среднее | 2-3% | Хорошо |
+1. Using `multiprocessing.set_start_method('spawn')` when needed
+2. Properly structuring code to avoid issues with pickling
+3. Implementing proper process isolation for model training
 
-*Метрики варьируются в зависимости от характеристик датасета*
+Example of parallel model evaluation:
 
-### CEEMDAN и PyEMD
+```python
+from multiprocessing import Pool
+import os
 
-Платформа использует CEEMDAN для декомпозиции временных рядов с двумя реализациями:
+def evaluate_model(args):
+    model_class, data, params = args
+    model = model_class(**params)
+    return model.evaluate(data)
 
-1. **PyEMD (Предпочтительнее)** - на основе C-расширения, быстро, но требует компиляции
-2. **SimpleCEEMDAN (Fallback)** - на чистом Python, медленнее, но всегда работает
+if __name__ == "__main__":
+    # This is important for Mac compatibility
+    if os.name == 'posix':
+        import multiprocessing as mp
+        mp.set_start_method('spawn', force=True)
+    
+    # Run evaluations in parallel
+    with Pool(processes=os.cpu_count()) as pool:
+        results = pool.map(evaluate_model, model_args_list)
+```
 
-Когда PyEMD недоступен (часто на Mac/ARM64), система автоматически переходит на SimpleCEEMDAN с предупреждающим сообщением. Это **нормальное и ожидаемое поведение**.
+## Datasets Support
 
-### Вывод
+The project supports various time series datasets:
 
-- **Графики**: Прогнозы отдельных моделей, визуализация декомпозиции
-- **CSV**: Комплексные результаты с метриками для всех моделей
-- **Консоль**: Прогресс в реальном времени и производительность моделей
+- M3 Competition Data
+- M4 Competition Data
+- Custom CSV files
+- Synthetic time series generation
+- Popular benchmark datasets
 
-### Требования
+## Configuration
 
-- Python 3.10+
-- NumPy, Pandas, SciPy
-- Scikit-learn, Statsmodels
-- Prophet, TensorFlow/Keras
-- PyEMD (опционально, с fallback на чистый Python)
+All models can be configured with parameters for:
+- Seasonality settings
+- Number of series to process
+- Model hyperparameters
+- Training/validation splits
 
-### Docker
+## Contributing
 
-Проект включает оптимизированный Dockerfile с:
-- Многоэтапной сборкой для меньших образов
-- Python 3.10 для лучшей совместимости wheel'ов
-- Всеми научными зависимостями предварительно скомпилированными
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-### Лицензия
+## License
 
-MIT License - см. файл LICENSE для подробностей
-
-### Участие в разработке
-
-Приветствуются исправления ошибок и улучшения! Не стесняйтесь создавать issues или pull requests.
-
----
-
-**Last Updated**: January 24, 2026
+MIT License
